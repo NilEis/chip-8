@@ -7,6 +7,7 @@ set(CMAKE_C_STANDARD 23) # Set the C standard to C23
 
 # Set the paths to your source and header files
 set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/audio/notes.c
             ${CMAKE_CURRENT_SOURCE_DIR}/src/audio/beep.c)
 
 include(FetchContent)
