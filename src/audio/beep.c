@@ -39,7 +39,7 @@ uint32_t sample_position = 0;
 
 void (*beep)(void) = beep_with_init;
 
-void beep_with_init(void)
+void beep_init(void)
 {
     uint32_t b = SDL_WasInit(SDL_INIT_AUDIO);
     if (!b)
@@ -65,15 +65,6 @@ void beep_with_init(void)
         return;
     }
 
-    printf("audio_spec_template.freq %d = %d\n", audio_spec_template.freq, beeper.audio_spec.freq);
-    printf("audio_spec_template.format %d = %d\n", audio_spec_template.format, beeper.audio_spec.format);
-    printf("audio_spec_template.channels %d = %d\n", audio_spec_template.channels, beeper.audio_spec.channels);
-    printf("audio_spec_template.samples %d = %d\n", audio_spec_template.samples, beeper.audio_spec.samples);
-    printf("audio_spec_template.callback %p = %p\n", audio_spec_template.callback, beeper.audio_spec.callback);
-    printf("audio_spec_template.userdata %p = %p\n", &audio_spec_template.userdata, beeper.audio_spec.userdata);
-
-    printf("Audio device name: %s\n", SDL_GetAudioDeviceName(beeper.audio_device, 0));
-
     const char *formatName;
     switch (beeper.audio_spec.format)
     {
@@ -92,19 +83,26 @@ void beep_with_init(void)
         // TODO: throw exception
     }
 
-    printf("frequency: %d\n", beeper.audio_spec.freq);
+    printf("Audio device name: %s\n", SDL_GetAudioDeviceName(beeper.audio_device, 0));
+
     printf("format: %s\n", formatName);
-
-    printf("channels: %d\n", (int)(beeper.audio_spec.channels));
-
-    printf("samples: %d\n", beeper.audio_spec.samples);
+    printf("audio_spec_template.freq %d = %d\n", audio_spec_template.freq, beeper.audio_spec.freq);
+    printf("audio_spec_template.format %d = %d\n", audio_spec_template.format, beeper.audio_spec.format);
+    printf("audio_spec_template.channels %d = %d\n", audio_spec_template.channels, beeper.audio_spec.channels);
+    printf("audio_spec_template.samples %d = %d\n", audio_spec_template.samples, beeper.audio_spec.samples);
+    printf("audio_spec_template.callback %p = %p\n", audio_spec_template.callback, beeper.audio_spec.callback);
+    printf("audio_spec_template.userdata %p = %p\n", &audio_spec_template.userdata, beeper.audio_spec.userdata);
     printf("padding: %d\n", beeper.audio_spec.padding);
     printf("size: %d\n", beeper.audio_spec.size);
 
     beep = beep_f;
 
     atexit(beep_cleanup);
+}
 
+void beep_with_init(void)
+{
+    beep_init();
     beep_f();
 }
 
@@ -194,12 +192,12 @@ static double get_data(void)
     return sin(pos * angular_freq) * amplitude;
 }
 
-void set_frequency(double frequency)
+void beep_set_frequency(double frequency)
 {
     beeper.frequency = frequency;
 }
 
-void set_volume(double volume)
+void beep_set_volume(double volume)
 {
     beeper.volume = volume;
 }

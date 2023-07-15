@@ -1,7 +1,7 @@
 #ifndef NOTES_H
 #define NOTES_H
 
-#include <stdint.h>
+#include <stddef.h>
 
 #define C0 16.35
 #define C0_index 0
