@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <inttypes.h>
 
 typedef struct
 {
@@ -15,6 +17,7 @@ typedef struct
 
 struct
 {
+    uint64_t ns_per_tick;
     uint8_t mem[CHIP_MEM_SIZE];
     struct
     {
@@ -36,9 +39,13 @@ struct
 
 static void *cpu_delay_timer(void *args);
 static void *cpu_sound_timer(void *args);
+static uint64_t get_ns(void);
 
 void cpu_init(bool SUPER_CHIP, uint64_t Hz)
 {
+
+    chip_8.ns_per_tick = 1000000000 / Hz;
+
     beep_init();
     beep_set_volume(0.75);
     beep_set_frequency(G_SHARP_4);
@@ -65,6 +72,30 @@ void cpu_init(bool SUPER_CHIP, uint64_t Hz)
 
     pthread_create(&(chip_8.delay_timer.thread), NULL, cpu_delay_timer, NULL);
     pthread_create(&(chip_8.sound_timer.timer.thread), NULL, cpu_sound_timer, NULL);
+}
+
+void cpu_tick(void)
+{
+    uint64_t start_time = get_ns();
+
+    uint16_t fetched = (chip_8.mem[chip_8.pc] << 8) | chip_8.mem[chip_8.pc + 1];
+    chip_8.pc += 2;
+    switch (fetched & 0xF000)
+    {
+    case 0:
+
+        break;
+
+    default:
+        break;
+    }
+
+    struct timespec t;
+    t.tv_sec = 0;
+    t.tv_nsec = get_ns() - start_time;
+    t.tv_nsec = (t.tv_nsec < chip_8.ns_per_tick) * (chip_8.ns_per_tick - t.tv_nsec);
+    uint64_t st = t.tv_nsec;
+    nanosleep(&t, NULL);
 }
 
 static void *cpu_delay_timer(void *args)
@@ -115,4 +146,13 @@ void cpu_stop(void)
     {
         free(chip_8.screen);
     }
+}
+
+#define SEC_TO_NS(sec) ((sec)*1000000000)
+static uint64_t get_ns(void)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    uint64_t ns = SEC_TO_NS((uint64_t)ts.tv_sec) + (uint64_t)ts.tv_nsec;
+    return ns;
 }
