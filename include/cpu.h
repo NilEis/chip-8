@@ -6,7 +6,7 @@
 
 void cpu_init(bool SUPER_CHIP, uint64_t Hz);
 
-void cpu_tick(void);
+uint64_t cpu_tick(void);
 
 void cpu_stop(void);
 

@@ -43,8 +43,9 @@ static uint64_t get_ns(void);
 
 void cpu_init(bool SUPER_CHIP, uint64_t Hz)
 {
-
     chip_8.ns_per_tick = 1000000000 / Hz;
+
+    printf("ns per tick: %" PRIu64 "\n", chip_8.ns_per_tick);
 
     beep_init();
     beep_set_volume(0.75);
@@ -66,16 +67,16 @@ void cpu_init(bool SUPER_CHIP, uint64_t Hz)
     memset(&(chip_8.stack), 0, sizeof(chip_8.stack));
     memset(&(chip_8.regs), 0, sizeof(chip_8.regs));
 
-    chip_8.sound_timer.timer.t = 60;
-
     chip_8.running = true;
 
     pthread_create(&(chip_8.delay_timer.thread), NULL, cpu_delay_timer, NULL);
     pthread_create(&(chip_8.sound_timer.timer.thread), NULL, cpu_sound_timer, NULL);
 }
 
-void cpu_tick(void)
+uint64_t cpu_tick(void)
 {
+    static uint64_t error = 0;
+
     uint64_t start_time = get_ns();
 
     uint16_t fetched = (chip_8.mem[chip_8.pc] << 8) | chip_8.mem[chip_8.pc + 1];
@@ -90,12 +91,14 @@ void cpu_tick(void)
         break;
     }
 
-    struct timespec t;
-    t.tv_sec = 0;
-    t.tv_nsec = get_ns() - start_time;
-    t.tv_nsec = (t.tv_nsec < chip_8.ns_per_tick) * (chip_8.ns_per_tick - t.tv_nsec);
-    uint64_t st = t.tv_nsec;
-    nanosleep(&t, NULL);
+    volatile uint64_t st = get_ns() - start_time;
+
+    while (st < chip_8.ns_per_tick)
+    {
+        st = (get_ns() - start_time) + error;
+    }
+    error = st - chip_8.ns_per_tick;
+    return st - error;
 }
 
 static void *cpu_delay_timer(void *args)
@@ -141,11 +144,7 @@ void cpu_stop(void)
     pthread_join(chip_8.sound_timer.timer.thread, NULL);
     pthread_mutex_destroy(&(chip_8.delay_timer.lock));
     pthread_mutex_destroy(&(chip_8.sound_timer.timer.lock));
-
-    if (chip_8.screen != NULL)
-    {
-        free(chip_8.screen);
-    }
+    free(chip_8.screen);
 }
 
 #define SEC_TO_NS(sec) ((sec)*1000000000)
