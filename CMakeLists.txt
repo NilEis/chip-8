@@ -9,6 +9,7 @@ set(CMAKE_C_STANDARD 17) # Set the C standard to C23
 set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/cpu.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/video/screen.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/audio/notes.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/audio/beep.c)
 

@@ -44,7 +44,7 @@ void beep_init(void)
     uint32_t b = SDL_WasInit(SDL_INIT_AUDIO);
     if (!b)
     {
-        SDL_Init(SDL_INIT_AUDIO);
+        SDL_InitSubSystem(SDL_INIT_AUDIO);
     }
 
     SDL_AudioSpec audio_spec_template;
@@ -140,6 +140,7 @@ void beep_f(void)
 void beep_stop()
 {
     SDL_PauseAudioDevice(beeper.audio_device);
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 void beep_cleanup(void)

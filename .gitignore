@@ -1,2 +1,4 @@
 .vscode/
 build/
+analysis_build/
+analysis/
