@@ -5,6 +5,7 @@
 #include "video/screen.h"
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <inttypes.h>
@@ -40,6 +41,7 @@ struct
     int8_t mem[CHIP_MEM_SIZE];
 } chip_8 = {0};
 
+static inline void cpu_draw_and_update(void);
 static void *cpu_delay_timer(void *args);
 static void *cpu_sound_timer(void *args);
 static void cpu_disasm(uint16_t pc);
@@ -47,6 +49,8 @@ static uint64_t get_ns(void);
 
 void cpu_init(bool SUPER_CHIP, uint64_t Hz)
 {
+    srand(get_ns());
+
     chip_8.ns_per_tick = 1000000000 / Hz;
     chip_8.pc = 0x200;
 
@@ -75,9 +79,12 @@ void cpu_init(bool SUPER_CHIP, uint64_t Hz)
     }
 
     memset(&(chip_8.screen.data), 0, sizeof(chip_8.screen.data));
-    memset(chip_8.mem, 0, sizeof(chip_8.mem));
+    memset(&(chip_8.mem), 0, sizeof(chip_8.mem));
     memset(&(chip_8.stack), 0, sizeof(chip_8.stack));
     memset(&(chip_8.regs), 0, sizeof(chip_8.regs));
+
+    chip_8.mem[0x200] = 0x12;
+    chip_8.mem[0x201] = 0x00;
 
     chip_8.should_stop = false;
     chip_8.delay_running = true;
@@ -105,15 +112,16 @@ uint16_t cpu_load(const char *path)
     }
     fread(&(chip_8.mem[0x200]), fsize, 1, f);
     fclose(f);
-    for (int i = 0; i < fsize; i += 2)
-    {
-        printf("%02X %02X\n", chip_8.mem[0x200 + i], chip_8.mem[0x201 + i]);
-    }
+    // for (int i = 0; i < fsize; i += 2)
+    // {
+    //     printf("%02X %02X\n", chip_8.mem[0x200 + i], chip_8.mem[0x201 + i]);
+    // }
     return fsize;
 }
 
-uint64_t cpu_tick(void)
+uint64_t cpu_tick(uint64_t *execution_time)
 {
+
     static uint64_t error = 0;
 
     uint64_t start_time = get_ns();
@@ -124,11 +132,12 @@ uint64_t cpu_tick(void)
         return 0;
     }
 
-    uint16_t fetched = chip_8.mem[chip_8.pc] | chip_8.mem[chip_8.pc + 1];
-    fetched <<= 8;
+    uint16_t fetched = chip_8.mem[chip_8.pc] << 8;
     fetched |= chip_8.mem[chip_8.pc + 1];
+
     chip_8.pc += 2;
-    switch (fetched & 0xF000)
+
+    switch ((fetched >> 12) & 0x000F)
     {
     case 0x0:
         switch (fetched & 0xFF)
@@ -145,6 +154,10 @@ uint64_t cpu_tick(void)
         }
         break;
     case 0x1:
+        // if ((chip_8.pc - 2) == (fetched & 0x0FFF))
+        // {
+        //     chip_8.should_stop = true;
+        // }
         chip_8.pc = fetched & 0x0FFF;
         break;
     case 0x2:
@@ -171,10 +184,13 @@ uint64_t cpu_tick(void)
         }
         break;
     case 0x6:
-        chip_8.regs[(fetched & 0x0F00) >> 8] = fetched & 0x00FF;
+        chip_8.regs[(fetched >> 8) & 0x000F] = fetched & 0x00FF;
         break;
     case 0x7:
-        break;
+    {
+        chip_8.regs[(fetched & 0x0F00) >> 8] += fetched & 0x00FF;
+    }
+    break;
     case 0x8:
         uint8_t r1 = (fetched & 0x0F00) >> 8;
         uint8_t r2 = (fetched & 0x00F0) >> 4;
@@ -231,14 +247,70 @@ uint64_t cpu_tick(void)
             chip_8.pc += 2;
         }
         break;
+    case 0xa:
+    {
+        chip_8.i = fetched & 0x0FFF;
+    }
+    break;
     case 0xb:
         chip_8.pc = (fetched & 0x0FFF) + chip_8.regs[0];
         break;
+    case 0xc:
+    {
+        chip_8.regs[(fetched & 0x0F00) >> 8] = rand() & (fetched & 0x00FF);
+    }
+    break;
+    case 0xd:
+    {
+        int x = chip_8.regs[(fetched & 0x0F00) >> 8];
+        int y = chip_8.regs[(fetched & 0x00F0) >> 4];
+        int n = fetched & 0x000F;
+        for (int y_i = 0; y_i < n; y_i++)
+        {
+            for (int x_i = 0; x_i < 8; x_i++)
+            {
+                int index = (x + x_i) + chip_8.screen.width * (y + y_i);
+                chip_8.screen.data[index] = chip_8.screen.data[index] != 0;
+                chip_8.screen.data[index] ^= (chip_8.mem[chip_8.i + y_i] >> (7 - x_i)) & 0x0001;
+                chip_8.screen.data[index] = 255 * chip_8.screen.data[index];
+            }
+        }
+        chip_8.screen.updated = true;
+    }
+    break;
     default:
-        printf("PC: %" PRIX8 "Was? %" PRIX16 "\n", chip_8.pc, fetched);
+        printf("PC: %" PRIX16 " Was? %" PRIX16 "\n", chip_8.pc - 2, fetched);
+        cpu_disasm(chip_8.pc - 2);
         break;
     }
 
+    cpu_draw_and_update();
+
+    volatile uint64_t st = get_ns() - start_time;
+
+    if (execution_time != NULL)
+    {
+        *execution_time = st;
+    }
+
+    while (st < chip_8.ns_per_tick)
+    {
+        st = (get_ns() - start_time) + error;
+    }
+    error = st - chip_8.ns_per_tick;
+    return st - error;
+}
+
+void cpu_disassemble(int start, int stop)
+{
+    for (int i = start; i < stop; i += 2)
+    {
+        cpu_disasm(i);
+    }
+}
+
+static inline void cpu_draw_and_update(void)
+{
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
@@ -256,31 +328,13 @@ uint64_t cpu_tick(void)
         chip_8.screen.updated = false;
         pthread_mutex_unlock(&(chip_8.screen.lock));
     }
-
-    volatile uint64_t st = get_ns() - start_time;
-
-    while (st < chip_8.ns_per_tick)
-    {
-        st = (get_ns() - start_time) + error;
-    }
-    error = st - chip_8.ns_per_tick;
-    return st - error;
+    screen_draw();
 }
 
-void cpu_disassemble(int start, int stop)
-{
-    for (int i = start; i < stop; i++)
-    {
-        cpu_disasm(i);
-        i += 2;
-    }
-}
-
-// max len: INST [0000], 0000        // Comment
 static void cpu_disasm(uint16_t pc)
 {
     uint8_t code[2] = {(chip_8.mem[pc]), chip_8.mem[pc + 1]};
-    printf("%02" PRIX8 "%02" PRIX8 ": ", code[0], code[1]);
+    printf("pc[%03" PRIX16 "] - %02" PRIX8 "%02" PRIX8 ": ", pc, code[0], code[1]);
     switch (code[0] >> 4)
     {
     case 0x00:
@@ -319,7 +373,7 @@ static void cpu_disasm(uint16_t pc)
     }
     break;
     case 0x07:
-        printf("ADD. V%" PRIX8 ", 0x%" PRIX16 "                  // Set V%" PRIX8 " to V%" PRIX8 " + 0x%" PRIX8 "\n", code[0] & 0x0F, code[1], code[0] & 0x0F, code[0] & 0x0F, code[1]);
+        printf("ADD. V%" PRIX8 ", 0x%" PRIX16 "                 // Set V%" PRIX8 " to V%" PRIX8 " + 0x%" PRIX8 "\n", code[0] & 0x0F, code[1], code[0] & 0x0F, code[0] & 0x0F, code[1]);
         break;
     case 0x08:
         switch (code[1] & 0x000F)
@@ -370,7 +424,7 @@ static void cpu_disasm(uint16_t pc)
         printf("c not handled yet\n");
         break;
     case 0x0d:
-        printf("DRAW V%" PRIX8 "V%" PRIX8 " N%" PRIX8 "            // Draw the sprite in memory with %" PRIX8 " rows at I on coordinates V%" PRIX8 ", V%" PRIX8 "\n", code[0] & 0x0F, code[1] >> 4, code[1] & 0x0F, code[0] & 0x0F, code[1] >> 4, code[1] & 0x0F);
+        printf("DRAW V%" PRIX8 "V%" PRIX8 " N%" PRIX8 "                 // Draw the sprite in memory with %" PRIX8 " rows at I on coordinates V%" PRIX8 ", V%" PRIX8 "\n", code[0] & 0x0F, code[1] >> 4, code[1] & 0x0F, code[1] & 0x0F, code[1] >> 4, code[1] & 0x0F);
         break;
     case 0x0e:
         printf("e not handled yet\n");

@@ -8,7 +8,7 @@ SDL_Texture *texture;
 void screen_init(bool super, int width, int height)
 {
     SDL_InitSubSystem(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("CHIP-8", width, height, 0);
+    window = SDL_CreateWindow("CHIP-8", width, height, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, NULL, SDL_RENDERER_ACCELERATED);
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB332, SDL_TEXTUREACCESS_STATIC, super ? CHIP_SUPER_DISPLAY_WIDTH : CHIP_DISPLAY_WIDTH, super ? CHIP_SUPER_DISPLAY_HEIGHT : CHIP_DISPLAY_HEIGHT);
 }

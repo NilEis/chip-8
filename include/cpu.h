@@ -11,7 +11,7 @@ uint16_t cpu_load(const char *path);
 
 void cpu_disassemble(int start, int stop);
 
-uint64_t cpu_tick(void);
+uint64_t cpu_tick(uint64_t *execution_time);
 
 bool cpu_stopped(void);
 

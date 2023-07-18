@@ -14,11 +14,14 @@ int main(int argc, char const **argv)
         cpu_disassemble(0x200, 0x200 + size);
     }
     uint64_t st = 0;
+    uint64_t theoretical_time = 0;
     while (!cpu_stopped())
     {
-        st += cpu_tick();
+        uint64_t tmp = 0;
+        st += cpu_tick(&tmp);
+        theoretical_time += tmp;
     }
-    printf("Total execution time: %" PRIu64 " ms\n", (st / 1000000));
+    printf("Total execution time:\nTotal time:     %" PRIu64 " ms\nInterpret time: %" PRIu64 " ms\n", (st / 1000000),(theoretical_time / 1000000));
     cpu_stop();
     return 0;
 }
