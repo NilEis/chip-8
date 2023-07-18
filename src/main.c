@@ -7,14 +7,16 @@
 
 int main(int argc, char const **argv)
 {
-    printf("Hallo\n");
     cpu_init(false, HZ);
-    uint64_t st = 0;
-    uint64_t ret = 1;
-    for (int i = 0; i < 1000 && ret != 0; i++)
+    if (argc >= 2)
     {
-        ret = cpu_tick();
-        st += ret;
+        uint16_t size = cpu_load(argv[1]);
+        cpu_disassemble(0x200, 0x200 + size);
+    }
+    uint64_t st = 0;
+    while (!cpu_stopped())
+    {
+        st += cpu_tick();
     }
     printf("Total execution time: %" PRIu64 " ms\n", (st / 1000000));
     cpu_stop();
