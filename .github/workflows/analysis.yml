@@ -10,5 +10,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@main
 
-      - name: Run Codacy Analysis CLI
+      - name: Run analysis of source
         uses: codacy/codacy-analysis-cli-action@master
+        with:
+          directory: src
+          verbose: true
+      - name: Run analysis of header
+        uses: codacy/codacy-analysis-cli-action@master
+        with:
+          directory: include
+          verbose: true
