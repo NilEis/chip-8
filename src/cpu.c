@@ -37,6 +37,7 @@ struct
     } sound_timer;
     const uint8_t *keys;
     int8_t regs[16];
+    bool debugging;
     bool should_stop;
     bool delay_running;
     bool sound_running;
@@ -185,6 +186,11 @@ uint64_t cpu_tick(uint64_t *execution_time)
     {
         chip_8.should_stop = true;
         return 0;
+    }
+
+    if (chip_8.debugging)
+    {
+        cpu_disasm(chip_8.pc);
     }
 
     uint16_t fetched = chip_8.mem[chip_8.pc] << 8;
@@ -424,6 +430,11 @@ static inline void cpu_get_input(void)
         }
         NFD_Quit();
 #endif // DEBUG
+    }
+
+    if (chip_8.keys[SDL_SCANCODE_G])
+    {
+        chip_8.debugging = !chip_8.debugging;
     }
 }
 
