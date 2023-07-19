@@ -13,10 +13,10 @@ jobs:
       - name: Run analysis of source
         uses: codacy/codacy-analysis-cli-action@master
         with:
-          directory: src
+          directory: ${{github.workspace}}/src
           verbose: true
       - name: Run analysis of header
         uses: codacy/codacy-analysis-cli-action@master
         with:
-          directory: include
+          directory: ${{github.workspace}}/include
           verbose: true
