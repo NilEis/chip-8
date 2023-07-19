@@ -23,7 +23,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ${{github.workspace}}/build
-        key: ${{ runner.OS }}-npm-cache-${{ hashFiles('**/CMakeCache.txt') }}
+        key: ${{ runner.OS }}-npm-cache-${{ hashFiles('CMakeLists.txt') }}
         restore-keys: |
           ${{ runner.OS }}-npm-cache-
     - name: Configure CMake
