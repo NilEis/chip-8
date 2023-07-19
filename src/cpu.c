@@ -9,7 +9,9 @@
 #include <string.h>
 #include <time.h>
 #include <inttypes.h>
+#ifdef FILE_OPEN
 #include "nfd.h"
+#endif //FILE_OPEN
 
 #include "programs/1-chip8-logo.h"
 #include "programs/2-ibm-logo.h"
@@ -408,6 +410,8 @@ static inline void cpu_get_input(void)
     }
     else if (chip_8.keys[SDL_SCANCODE_F3])
     {
+
+#ifdef FILE_OPEN
         NFD_Init();
         cpu_reset();
         nfdchar_t *outPath;
@@ -419,6 +423,7 @@ static inline void cpu_get_input(void)
             NFD_FreePath(outPath);
         }
         NFD_Quit();
+#endif // DEBUG
     }
 }
 

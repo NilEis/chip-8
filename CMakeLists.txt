@@ -19,24 +19,32 @@ find_package(Threads REQUIRED)
 
 include(FetchContent)
 
+option(FILE_OPEN "use file opener" ON)
+
 FetchContent_Declare(
   sdl2
   GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
   GIT_TAG origin/main)
 
+if(FILE_OPEN)
+  add_compile_definitions(FILE_OPEN=1)
+
   FetchContent_Declare(
   nfd
   GIT_REPOSITORY https://github.com/btzy/nativefiledialog-extended.git
   GIT_TAG origin/master)
-
-FetchContent_MakeAvailable(sdl2 nfd)
+  
+  FetchContent_MakeAvailable(sdl2 nfd)
+else()
+  FetchContent_MakeAvailable(sdl2)
+endif()
 
 add_executable(chip-8 ${SOURCES})
 
 if(BUILD_SHARED_LIBS)
-  target_link_libraries(chip-8 SDL3-shared Threads::Threads nfd)
+  target_link_libraries(chip-8 SDL3-shared Threads::Threads $<$<BOOL:${FILE_OPEN}>:nfd>)
 else()
-  target_link_libraries(chip-8 SDL3-static Threads::Threads nfd)
+  target_link_libraries(chip-8 SDL3-static Threads::Threads $<$<BOOL:${FILE_OPEN}>:nfd>)
 endif()
 
 target_include_directories(chip-8 PUBLIC include)
