@@ -29,7 +29,6 @@ static void writeData_s16(uint8_t *ptr, double data);
 static void writeData_f32(uint8_t *ptr, double data);
 
 void beep_f(void);
-void beep_cleanup(void);
 
 void beep_callback(void *data, uint8_t *buffer, int length);
 
@@ -96,8 +95,6 @@ void beep_init(void)
     printf("size: %d\n", beeper.audio_spec.size);
 
     beep = beep_f;
-
-    atexit(beep_cleanup);
 }
 
 void beep_with_init(void)

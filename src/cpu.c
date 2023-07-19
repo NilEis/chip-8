@@ -11,7 +11,7 @@
 #include <inttypes.h>
 #ifdef FILE_OPEN
 #include "nfd.h"
-#endif //FILE_OPEN
+#endif // FILE_OPEN
 
 #include "programs/1-chip8-logo.h"
 #include "programs/2-ibm-logo.h"
@@ -25,6 +25,7 @@ typedef struct
 
 struct
 {
+    uint64_t HZ;
     uint64_t ns_per_tick;
     screen_t screen;
     uint16_t pc;
@@ -60,6 +61,7 @@ void cpu_init(bool SUPER_CHIP, uint64_t Hz)
 {
     srand(get_ns());
 
+    chip_8.HZ = Hz;
     chip_8.ns_per_tick = 1000000000 / Hz;
     chip_8.pc = 0x200;
 
@@ -109,8 +111,6 @@ void cpu_reset(void)
 {
     chip_8.pc = 0x200;
     chip_8.i = 0;
-
-    printf("ns per tick: %" PRIu64 "\n", chip_8.ns_per_tick);
 
     chip_8.screen.updated = true;
 
@@ -194,8 +194,7 @@ uint64_t cpu_tick(uint64_t *execution_time)
     }
 
     uint16_t fetched = chip_8.mem[chip_8.pc] << 8;
-    fetched |= chip_8.mem[chip_8.pc + 1];
-
+    fetched |= chip_8.mem[chip_8.pc + 1] & 0x00FF;
     chip_8.pc += 2;
 
     switch ((fetched >> 12) & 0x000F)
@@ -436,6 +435,19 @@ static inline void cpu_get_input(void)
     {
         chip_8.debugging = !chip_8.debugging;
     }
+
+    if (chip_8.keys[SDL_SCANCODE_KP_MINUS])
+    {
+        chip_8.HZ = chip_8.HZ <= 1 ? 1 : chip_8.HZ - 1;
+        chip_8.ns_per_tick = 1000000000 / chip_8.HZ;
+        printf("HZ: %" PRIu64 "\n", chip_8.HZ);
+    }
+    else if (chip_8.keys[SDL_SCANCODE_KP_PLUS])
+    {
+        chip_8.HZ = chip_8.HZ == UINT64_MAX ? UINT64_MAX : chip_8.HZ + 1;
+        chip_8.ns_per_tick = 1000000000 / chip_8.HZ;
+        printf("HZ: %" PRIu64 "\n", chip_8.HZ);
+    }
 }
 
 static void cpu_disasm(uint16_t pc)
@@ -592,6 +604,7 @@ static void *cpu_sound_timer(void *args)
     {
         beep_stop();
     }
+    beep_cleanup();
     return NULL;
 }
 

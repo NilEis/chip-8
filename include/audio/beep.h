@@ -11,6 +11,8 @@ void beep_stop();
 
 void beep_set_frequency(double frequency);
 
+void beep_cleanup(void);
+
 void beep_set_volume(double volume);
 
 #endif // BEEP_H
