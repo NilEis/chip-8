@@ -9,6 +9,7 @@
 #include <string.h>
 #include <time.h>
 #include <inttypes.h>
+#include "nfd.h"
 
 #include "programs/1-chip8-logo.h"
 #include "programs/2-ibm-logo.h"
@@ -404,6 +405,20 @@ static inline void cpu_get_input(void)
     {
         cpu_reset();
         cpu_load_mem(ibm_logo_ch8, ibm_logo_ch8_size);
+    }
+    else if (chip_8.keys[SDL_SCANCODE_F3])
+    {
+        NFD_Init();
+        cpu_reset();
+        nfdchar_t *outPath;
+        nfdfilteritem_t filterItem[2] = {{"Chip-8 program", "ch,ch8"}};
+        nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 1, NULL);
+        if (result == NFD_OKAY)
+        {
+            cpu_load(outPath);
+            NFD_FreePath(outPath);
+        }
+        NFD_Quit();
     }
 }
 
