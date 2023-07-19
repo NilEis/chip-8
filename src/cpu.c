@@ -60,7 +60,7 @@ void cpu_init(bool SUPER_CHIP, uint64_t Hz)
     beep_set_volume(0.75);
     beep_set_frequency(G_SHARP_4);
 
-    screen_init(SUPER_CHIP, 600, 400);
+    screen_init(SUPER_CHIP, 600, 300);
 
     chip_8.screen.updated = true;
 
@@ -110,7 +110,7 @@ uint16_t cpu_load(const char *path)
         printf("error: program does not fit in memory\n");
         return 0;
     }
-    fread(&(chip_8.mem[0x200]), fsize, 1, f);
+    fsize = fread(&(chip_8.mem[0x200]), fsize, 1, f);
     fclose(f);
     // for (int i = 0; i < fsize; i += 2)
     // {
