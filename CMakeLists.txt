@@ -8,6 +8,7 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cpu.c
   ${CMAKE_CURRENT_SOURCE_DIR}/src/programs/1-chip8-logo.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/programs/2-ibm-logo.c
   ${CMAKE_CURRENT_SOURCE_DIR}/src/video/screen.c
   ${CMAKE_CURRENT_SOURCE_DIR}/src/audio/notes.c
   ${CMAKE_CURRENT_SOURCE_DIR}/src/audio/beep.c)
@@ -23,14 +24,19 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
   GIT_TAG origin/main)
 
-FetchContent_MakeAvailable(sdl2)
+  FetchContent_Declare(
+  nfd
+  GIT_REPOSITORY https://github.com/btzy/nativefiledialog-extended.git
+  GIT_TAG origin/master)
+
+FetchContent_MakeAvailable(sdl2 nfd)
 
 add_executable(chip-8 ${SOURCES})
 
 if(BUILD_SHARED_LIBS)
-  target_link_libraries(chip-8 SDL3-shared Threads::Threads)
+  target_link_libraries(chip-8 SDL3-shared Threads::Threads nfd)
 else()
-  target_link_libraries(chip-8 SDL3-static Threads::Threads)
+  target_link_libraries(chip-8 SDL3-static Threads::Threads nfd)
 endif()
 
 target_include_directories(chip-8 PUBLIC include)

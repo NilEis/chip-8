@@ -1,5 +1,5 @@
-#ifndef chip8-logo_ch8_H
-#define chip8-logo_ch8_H
+#ifndef chip8_logo_ch8_H
+#define chip8_logo_ch8_H
 
 #include <stdint.h>
 #include <stddef.h>

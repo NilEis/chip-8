@@ -10,6 +10,9 @@
 #include <time.h>
 #include <inttypes.h>
 
+#include "programs/1-chip8-logo.h"
+#include "programs/2-ibm-logo.h"
+
 typedef struct
 {
     pthread_t thread;
@@ -29,7 +32,7 @@ struct
         bool on;
         cpu_timer_t timer;
     } sound_timer;
-    bool keys[322];
+    const uint8_t *keys;
     int8_t regs[16];
     bool should_stop;
     bool delay_running;
@@ -64,6 +67,8 @@ void cpu_init(bool SUPER_CHIP, uint64_t Hz)
 
     screen_init(SUPER_CHIP, 600, 300);
 
+    chip_8.keys = SDL_GetKeyboardState(NULL);
+
     chip_8.screen.updated = true;
 
     pthread_mutex_init(&(chip_8.delay_timer.lock), NULL);
@@ -80,7 +85,6 @@ void cpu_init(bool SUPER_CHIP, uint64_t Hz)
         chip_8.screen.height = CHIP_DISPLAY_HEIGHT;
     }
 
-    memset(&(chip_8.keys), 0, sizeof(chip_8.keys));
     memset(&(chip_8.screen.data), 0, sizeof(chip_8.screen.data));
     memset(&(chip_8.mem), 0, sizeof(chip_8.mem));
     memset(&(chip_8.stack), 0, sizeof(chip_8.stack));
@@ -106,7 +110,6 @@ void cpu_reset(void)
 
     chip_8.screen.updated = true;
 
-    memset(&(chip_8.keys), 0, sizeof(chip_8.keys));
     memset(&(chip_8.screen.data), 0, sizeof(chip_8.screen.data));
     memset(&(chip_8.mem), 0, sizeof(chip_8.mem));
     memset(&(chip_8.stack), 0, sizeof(chip_8.stack));
@@ -372,12 +375,6 @@ static inline void cpu_draw_and_update(void)
             chip_8.should_stop = true;
         }
         break;
-        case SDL_EVENT_KEY_DOWN:
-            chip_8.keys[event.key.keysym.sym] = true;
-            break;
-        case SDL_EVENT_KEY_UP:
-            chip_8.keys[event.key.keysym.sym] = false;
-            break;
         }
     }
     if (chip_8.screen.updated)
@@ -394,9 +391,19 @@ static inline void cpu_draw_and_update(void)
 
 static inline void cpu_get_input(void)
 {
-    if (chip_8.keys[SDLK_ESCAPE])
+    if (chip_8.keys[SDL_SCANCODE_ESCAPE])
     {
         chip_8.should_stop = true;
+    }
+    if (chip_8.keys[SDL_SCANCODE_F1])
+    {
+        cpu_reset();
+        cpu_load_mem(chip8_logo_ch8, chip8_logo_ch8_size);
+    }
+    else if (chip_8.keys[SDL_SCANCODE_F2])
+    {
+        cpu_reset();
+        cpu_load_mem(ibm_logo_ch8, ibm_logo_ch8_size);
     }
 }
 
