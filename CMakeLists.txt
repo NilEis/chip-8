@@ -4,14 +4,13 @@ project(chip-8 C)
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
 set(CMAKE_C_STANDARD 17) # Set the C standard to C23
-
-# Set the paths to your source and header files
 set(SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/cpu.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/video/screen.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/audio/notes.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/audio/beep.c)
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/cpu.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/programs/1-chip8-logo.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/video/screen.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/audio/notes.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/audio/beep.c)
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)

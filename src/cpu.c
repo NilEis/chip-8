@@ -29,6 +29,7 @@ struct
         bool on;
         cpu_timer_t timer;
     } sound_timer;
+    bool keys[322];
     int8_t regs[16];
     bool should_stop;
     bool delay_running;
@@ -42,6 +43,7 @@ struct
 } chip_8 = {0};
 
 static inline void cpu_draw_and_update(void);
+static inline void cpu_get_input(void);
 static void *cpu_delay_timer(void *args);
 static void *cpu_sound_timer(void *args);
 static void cpu_disasm(uint16_t pc);
@@ -78,6 +80,7 @@ void cpu_init(bool SUPER_CHIP, uint64_t Hz)
         chip_8.screen.height = CHIP_DISPLAY_HEIGHT;
     }
 
+    memset(&(chip_8.keys), 0, sizeof(chip_8.keys));
     memset(&(chip_8.screen.data), 0, sizeof(chip_8.screen.data));
     memset(&(chip_8.mem), 0, sizeof(chip_8.mem));
     memset(&(chip_8.stack), 0, sizeof(chip_8.stack));
@@ -92,6 +95,42 @@ void cpu_init(bool SUPER_CHIP, uint64_t Hz)
 
     pthread_create(&(chip_8.delay_timer.thread), NULL, cpu_delay_timer, NULL);
     pthread_create(&(chip_8.sound_timer.timer.thread), NULL, cpu_sound_timer, NULL);
+}
+
+void cpu_reset(void)
+{
+    chip_8.pc = 0x200;
+    chip_8.i = 0;
+
+    printf("ns per tick: %" PRIu64 "\n", chip_8.ns_per_tick);
+
+    chip_8.screen.updated = true;
+
+    memset(&(chip_8.keys), 0, sizeof(chip_8.keys));
+    memset(&(chip_8.screen.data), 0, sizeof(chip_8.screen.data));
+    memset(&(chip_8.mem), 0, sizeof(chip_8.mem));
+    memset(&(chip_8.stack), 0, sizeof(chip_8.stack));
+    memset(&(chip_8.regs), 0, sizeof(chip_8.regs));
+
+    chip_8.mem[0x200] = 0x12;
+    chip_8.mem[0x201] = 0x00;
+
+    chip_8.should_stop = false;
+    chip_8.delay_running = true;
+    chip_8.sound_running = true;
+
+    pthread_mutex_lock(&(chip_8.sound_timer.timer.lock));
+    chip_8.sound_timer.timer.t = 0;
+    if (chip_8.sound_timer.on)
+    {
+        beep_stop();
+        chip_8.sound_timer.on = false;
+    }
+    pthread_mutex_unlock(&(chip_8.sound_timer.timer.lock));
+
+    pthread_mutex_lock(&(chip_8.delay_timer.lock));
+    chip_8.delay_timer.t = 0;
+    pthread_mutex_unlock(&(chip_8.delay_timer.lock));
 }
 
 uint16_t cpu_load(const char *path)
@@ -117,6 +156,16 @@ uint16_t cpu_load(const char *path)
     //     printf("%02X %02X\n", chip_8.mem[0x200 + i], chip_8.mem[0x201 + i]);
     // }
     return fsize;
+}
+
+uint16_t cpu_load_mem(const uint8_t *data, size_t size)
+{
+    if (sizeof(chip_8.mem) < size + 0x200)
+    {
+        printf("error: program does not fit in memory\n");
+        return 0;
+    }
+    memcpy(&(chip_8.mem[0x200]), data, size);
 }
 
 uint64_t cpu_tick(uint64_t *execution_time)
@@ -286,6 +335,8 @@ uint64_t cpu_tick(uint64_t *execution_time)
 
     cpu_draw_and_update();
 
+    cpu_get_input();
+
     volatile uint64_t st = get_ns() - start_time;
 
     if (execution_time != NULL)
@@ -314,9 +365,19 @@ static inline void cpu_draw_and_update(void)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-        if (event.type == SDL_EVENT_QUIT)
+        switch (event.type)
+        {
+        case SDL_EVENT_QUIT:
         {
             chip_8.should_stop = true;
+        }
+        break;
+        case SDL_EVENT_KEY_DOWN:
+            chip_8.keys[event.key.keysym.sym] = true;
+            break;
+        case SDL_EVENT_KEY_UP:
+            chip_8.keys[event.key.keysym.sym] = false;
+            break;
         }
     }
     if (chip_8.screen.updated)
@@ -329,6 +390,14 @@ static inline void cpu_draw_and_update(void)
         pthread_mutex_unlock(&(chip_8.screen.lock));
     }
     screen_draw();
+}
+
+static inline void cpu_get_input(void)
+{
+    if (chip_8.keys[SDLK_ESCAPE])
+    {
+        chip_8.should_stop = true;
+    }
 }
 
 static void cpu_disasm(uint16_t pc)

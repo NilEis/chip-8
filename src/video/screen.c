@@ -25,16 +25,24 @@ void screen_draw(void)
     SDL_GetCurrentRenderOutputSize(renderer, &width, &height);
     if (width < height)
     {
-        size = width;
-        h_offset = (height - width) / 2;
+        size = width / 2;
+        h_offset = (height - size) / 2;
     }
     else
     {
-        size = height;
-        w_offset = (width - height) / 2;
+        if (height <= width / 2)
+        {
+            size = height;
+            w_offset = (width - (2 * size)) / 2;
+        }
+        else
+        {
+            size = width / 2;
+            h_offset = (height - size) / 2;
+        }
     }
 
-    const SDL_FRect dest_rect = {w_offset, h_offset, size, size};
+    const SDL_FRect dest_rect = {w_offset, h_offset, size * 2, size};
     SDL_RenderTexture(renderer, texture, NULL, &dest_rect);
     SDL_RenderPresent(renderer);
 }
