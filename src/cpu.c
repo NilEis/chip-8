@@ -440,6 +440,21 @@ static inline void cpu_get_input(void)
 
 static void cpu_disasm(uint16_t pc)
 {
+    static uint16_t last_pc = 0;
+    static uint16_t pc_count = 0;
+    if (pc == last_pc)
+    {
+        pc_count++;
+    }
+    else
+    {
+        pc_count = 0;
+    }
+    if (pc_count >= 1)
+    {
+        return;
+    }
+    last_pc = pc;
     uint8_t code[2] = {(chip_8.mem[pc]), chip_8.mem[pc + 1]};
     printf("pc[%03" PRIX16 "] - %02" PRIX8 "%02" PRIX8 ": ", pc, code[0], code[1]);
     switch (code[0] >> 4)
