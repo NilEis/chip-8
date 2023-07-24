@@ -3,7 +3,7 @@ project(chip-8 C)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
-set(CMAKE_C_STANDARD 17) # Set the C standard to C23
+set(CMAKE_C_STANDARD 17)
 set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cpu.c
