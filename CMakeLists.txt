@@ -24,7 +24,7 @@ option(FILE_OPEN "use file opener" ON)
 FetchContent_Declare(
   sdl2
   GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-  GIT_TAG origin/main)
+  GIT_TAG a509771a87559ca040a40b5fef932a8220343f7a)
 
 if(FILE_OPEN)
   add_compile_definitions(FILE_OPEN=1)
