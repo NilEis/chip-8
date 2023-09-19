@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en-us">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <title>Chip-8</title>
+    <meta name="viewport" content="width=device-width">
+
+
+    <style>
+        body {
+            margin: 0px;
+        }
+
+        canvas.emscripten {
+            border: 0px none;
+            background-color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class=emscripten id=canvas tabindex=-1
+        onclick="document.getElementById('canvas').requestFullscreen()"></canvas>
+    <p id="output" />
+    {{{ SCRIPT }}}
+</body>
+
+</html>

@@ -252,6 +252,7 @@ uint64_t cpu_tick(uint64_t *execution_time)
     }
     break;
     case 0x8:
+    {
         uint8_t r1 = (fetched & 0x0F00) >> 8;
         uint8_t r2 = (fetched & 0x00F0) >> 4;
         switch (fetched & 0x000F)
@@ -300,7 +301,8 @@ uint64_t cpu_tick(uint64_t *execution_time)
         default:
             break;
         }
-        break;
+    }
+    break;
     case 0x9:
         if (chip_8.regs[(fetched & 0x0F00) >> 8] != chip_8.regs[(fetched & 0x00F0) >> 4])
         {
