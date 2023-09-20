@@ -54,7 +54,7 @@ add_compile_options("Wall" "Wpedantic")
 if(EMSCRIPTEN)
 # remove --closure-args="--compilation_level SIMPLE" when https://github.com/emscripten-core/emscripten/issues/16706 is fixed
   set(CMAKE_C_FLAGS
-      "${CMAKE_C_FLAGS} -O3 -s USE_WEBGL2=1 -s FULL_ES3=1 -s USE_GLFW=3 -s WASM=1 -s ASYNCIFY -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=4 --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/src/wasm-shell/pre.js"
+      "${CMAKE_C_FLAGS} -g3 -s USE_WEBGL2=1 -s FULL_ES3=1 -s USE_GLFW=3 -s WASM=1 -s ASYNCIFY -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=1 -s MINIFY_HTML=0 -s ENVIRONMENT=web,worker -sFILESYSTEM=0"
   )
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy")
   set(CMAKE_C_FLAGS

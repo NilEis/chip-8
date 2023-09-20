@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
+#ifndef __EMSCRIPTEN__
 #define SAMPLE_FREQUENCY 44100
 #define SINE_FREQUENCY 1000
 #define SAMPLES_PER_SINE ((SAMPLE_FREQUENCY) / (SINE_FREQUENCY))
@@ -199,3 +199,5 @@ void beep_set_volume(double volume)
 {
     beeper.volume = volume;
 }
+
+#endif

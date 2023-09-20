@@ -53,7 +53,9 @@ struct
 static inline void cpu_draw_and_update(void);
 static inline void cpu_get_input(void);
 static void *cpu_delay_timer(void *args);
+#ifndef __EMSCRIPTEN__
 static void *cpu_sound_timer(void *args);
+#endif
 static void cpu_disasm(uint16_t pc);
 static uint64_t get_ns(void);
 
@@ -67,10 +69,11 @@ void cpu_init(bool SUPER_CHIP, uint64_t Hz)
 
     printf("ns per tick: %" PRIu64 "\n", chip_8.ns_per_tick);
 
+#ifndef __EMSCRIPTEN__
     beep_init();
     beep_set_volume(0.75);
     beep_set_frequency(G_SHARP_4);
-
+#endif
     screen_init(SUPER_CHIP, 600, 300);
 
     chip_8.keys = SDL_GetKeyboardState(NULL);
@@ -104,7 +107,9 @@ void cpu_init(bool SUPER_CHIP, uint64_t Hz)
     chip_8.sound_running = true;
 
     pthread_create(&(chip_8.delay_timer.thread), NULL, cpu_delay_timer, NULL);
+#ifndef __EMSCRIPTEN__
     pthread_create(&(chip_8.sound_timer.timer.thread), NULL, cpu_sound_timer, NULL);
+#endif
 }
 
 void cpu_reset(void)
@@ -124,6 +129,7 @@ void cpu_reset(void)
 
     chip_8.should_stop = false;
     chip_8.delay_running = true;
+#ifndef __EMSCRIPTEN__
     chip_8.sound_running = true;
 
     pthread_mutex_lock(&(chip_8.sound_timer.timer.lock));
@@ -134,6 +140,7 @@ void cpu_reset(void)
         chip_8.sound_timer.on = false;
     }
     pthread_mutex_unlock(&(chip_8.sound_timer.timer.lock));
+#endif
 
     pthread_mutex_lock(&(chip_8.delay_timer.lock));
     chip_8.delay_timer.t = 0;
@@ -583,6 +590,7 @@ static void *cpu_delay_timer(void *args)
     return NULL;
 }
 
+#ifndef __EMSCRIPTEN__
 static void *cpu_sound_timer(void *args)
 {
     while (chip_8.sound_running)
@@ -609,6 +617,7 @@ static void *cpu_sound_timer(void *args)
     beep_cleanup();
     return NULL;
 }
+#endif
 
 bool cpu_stopped(void)
 {
