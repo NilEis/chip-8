@@ -24,30 +24,31 @@
 <body>
     <canvas class=emscripten id=canvas tabindex=-1
         onclick="document.getElementById('canvas').requestFullscreen()"></canvas>
-    <p id="output" />
+    <p id="output">
+    </p>
     <script>
         if (typeof SharedArrayBuffer === 'undefined') {
-            const dummyMemory = new WebAssembly.Memory({ initial: 0, maximum: 0, shared: true })
+            const dummyMemory =
+                new WebAssembly.Memory({ initial: 0, maximum: 0, shared: true })
             globalThis.SharedArrayBuffer = dummyMemory.buffer.constructor
         }
-        var Module = {
-            print: (function () {
-                var element = document.getElementById('output');
-                if (element) element.value = ''; // clear browser cache
-                return function (text) {
-                    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
-                    console.log(text);
-                    if (element) {
-                        element.value += text + "\\n";
-                        element.scrollTop = element.scrollHeight; // focus on bottom
-                    }
-                };
-            })(),
-            canvas: (function () {
-                var canvas = document.getElementById('canvas');
-                return canvas;
-            })()
+        Module = {};
+        let element = document.getElementById('output');
+        Module['print'] = (text) => {
+            if (text.length > 1)
+                text = Array.prototype.slice.call(text).join('');
+            console.log("log: " + text);
+            if (element) {
+                element.innerText += text + '\n';
+                element.scrollTop = element.scrollHeight;  // focus on bottom
+            }
         };
+        Module['printErr'] = Module['print'];
+
+        Module.canvas = (function () {
+            var canvas = document.getElementById('canvas');
+            return canvas;
+        })();
     </script>
     {{{ SCRIPT }}}
 </body>
