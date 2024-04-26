@@ -73,3 +73,11 @@ endif()
 add_compile_options("Wall" "Wpedantic")
 
 target_include_directories(chip-8 PUBLIC include)
+
+option(SUPPORT_CLANGD "Support clangd" ON)
+if(SUPPORT_CLANGD)
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+  set(CLANGD_SRC ${CMAKE_CURRENT_SOURCE_DIR}/cmake/.clangd.in)
+  set(CLANGD_DEST ${CMAKE_CURRENT_SOURCE_DIR}/.clangd)
+  configure_file(${CLANGD_SRC} ${CLANGD_DEST} @ONLY)
+endif()
