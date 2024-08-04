@@ -3,3 +3,5 @@ build/
 build*/
 analysis_build/
 analysis/
+.clangd
+.cache/
